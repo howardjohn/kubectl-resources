@@ -1,7 +1,7 @@
 
 .PHONY: format
 format:
-	goimports -l -w -local github.com/howardjohn/kubectl-resources *.go cmd/*.go
+	goimports -l -w -local github.com/howardjohn/kubectl-resources *.go cmd/*.go client/*.go
 
 .PHONY: vendor
 vendor:

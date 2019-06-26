@@ -3,20 +3,26 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
+
+	"github.com/howardjohn/kubectl-resources/client"
 )
 
 var (
-	namespace = ""
+	args = &client.Args{
+		Namespace:  "",
+		KubeConfig: path.Join(os.Getenv("HOME"), ".kube", "config"),
+	}
 )
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(
-		&namespace,
+		&args.Namespace,
 		"namespace",
 		"n",
-		namespace,
+		args.Namespace,
 		"Namespace to query. If not set, all namespaces are included",
 	)
 }
@@ -24,9 +30,8 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use:   "kubectl-resources",
 	Short: "Plugin to access Kubernetes resource requests, limits, and usage.",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Hello world!")
-		return nil
+	RunE: func(cmd *cobra.Command, a []string) error {
+		return client.Run(args)
 	},
 }
 
