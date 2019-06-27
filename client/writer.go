@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"sort"
@@ -23,7 +24,7 @@ func sortPodResources(res []*PodResource) {
 	})
 }
 
-func Write(response map[string]*PodResource) error {
+func Write(response map[string]*PodResource, args *Args) error {
 	resources := make([]*PodResource, 0, len(response))
 	for _, res := range response {
 		resources = append(resources, res)
@@ -31,15 +32,27 @@ func Write(response map[string]*PodResource) error {
 	sortPodResources(resources)
 
 	w := getNewTabWriter(os.Stdout)
-	if _, err := w.Write([]byte("NAME\tNAMESPACE\tNODE\n")); err != nil {
-		return err
+	if _, err := w.Write([]byte(formatHeader(args))); err != nil {
+		return fmt.Errorf("write failed: %v", err)
 	}
-	for _, pod := range resources {
-		if _, err := w.Write([]byte(pod.Name + "\t" + pod.Namespace + "\t" + pod.Node + "\n")); err != nil {
-			return err
+	for _, res := range resources {
+		row := formatRow(res, args)
+		if _, err := w.Write([]byte(row)); err != nil {
+			return fmt.Errorf("write failed: %v", err)
 		}
 	}
+
 	return w.Flush()
+}
+
+func formatHeader(args *Args) string {
+	// TODO
+	return "NAME"
+}
+
+func formatRow(resource *PodResource, args *Args) string {
+	// TODO
+	return resource.Name + "\n"
 }
 
 // GetNewTabWriter returns a tabwriter that translates tabbed columns in input into properly aligned text.
