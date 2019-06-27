@@ -32,6 +32,7 @@ func Write(response map[string]*PodResource, args *Args) error {
 		resources = append(resources, res)
 	}
 	sortPodResources(resources)
+	simplifyNames(resources)
 
 	w := getNewTabWriter(os.Stdout)
 	if _, err := w.Write([]byte(formatHeader(args))); err != nil {
@@ -92,6 +93,25 @@ func formatCpu(i int64) string {
 func formatMemory(i int64) string {
 	mb := int64(float64(i) / (1024 * 1024 * 1024))
 	return strconv.FormatInt(mb, 10) + "Mi"
+}
+
+func simplifyNames(resources []*PodResource) {
+	names := map[string]int{}
+	for _, pod := range resources {
+		parts := strings.Split(pod.Name, "-")
+		shortName := strings.Join(parts[:len(parts)-2], "-")
+		names[shortName]++
+	}
+	for _, pod := range resources {
+		parts := strings.Split(pod.Name, "-")
+		shortName := strings.Join(parts[:len(parts)-2], "-")
+		if names[shortName] > 1 {
+			// TODO consider removing deployment uid
+			//pod.Name = pod.Name
+		} else {
+			pod.Name = shortName
+		}
+	}
 }
 
 // GetNewTabWriter returns a tabwriter that translates tabbed columns in input into properly aligned text.
