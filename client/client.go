@@ -14,6 +14,7 @@ import (
 type Args struct {
 	Namespace  string
 	KubeConfig string
+	NamespaceBlacklist []string
 }
 
 func Run(args *Args) error {
@@ -36,10 +37,24 @@ func Run(args *Args) error {
 		return fmt.Errorf("failed to merge responses: %v", err)
 	}
 
+	filterBlacklist(resources, args.NamespaceBlacklist)
+
 	if err := Write(resources, args); err != nil {
 		return fmt.Errorf("faild to write: %v", err)
 	}
 	return nil
+}
+
+func filterBlacklist(resources map[string]*PodResource, blacklist []string) {
+	blMap := make(map[string]struct{})
+	for _, ns := range blacklist {
+		blMap[ns] = struct{}{}
+	}
+	for k, v := range resources {
+		if _, f := blMap[v.Namespace]; f {
+			delete(resources, k)
+		}
+	}
 }
 
 func FetchMetrics(cfg *rest.Config, ns string) (map[string]*PodResource, error) {

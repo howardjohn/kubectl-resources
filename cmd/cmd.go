@@ -12,8 +12,9 @@ import (
 
 var (
 	args = &client.Args{
-		Namespace:  "",
-		KubeConfig: path.Join(os.Getenv("HOME"), ".kube", "config"),
+		Namespace:          "",
+		KubeConfig:         path.Join(os.Getenv("HOME"), ".kube", "config"),
+		NamespaceBlacklist: []string{"kube-system"},
 	}
 )
 
