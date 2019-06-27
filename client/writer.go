@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strconv"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -36,9 +38,11 @@ func Write(response map[string]*PodResource, args *Args) error {
 		return fmt.Errorf("write failed: %v", err)
 	}
 	for _, res := range resources {
-		row := formatRow(res, args)
-		if _, err := w.Write([]byte(row)); err != nil {
-			return fmt.Errorf("write failed: %v", err)
+		rows := formatRow(res, args)
+		for _, row := range rows {
+			if _, err := w.Write([]byte(row)); err != nil {
+				return fmt.Errorf("write failed: %v", err)
+			}
 		}
 	}
 
@@ -46,13 +50,48 @@ func Write(response map[string]*PodResource, args *Args) error {
 }
 
 func formatHeader(args *Args) string {
-	// TODO
-	return "NAME"
+	headers := []string{
+		"NAMESPACE",
+		"POD",
+		"CONTAINER",
+		"CPU USE",
+		"CPU REQ",
+		"CPU LIM",
+		"MEM USE",
+		"MEM REQ",
+		"MEM LIM",
+		"\n",
+	}
+	return strings.Join(headers, "\t")
 }
 
-func formatRow(resource *PodResource, args *Args) string {
-	// TODO
-	return resource.Name + "\n"
+func formatRow(pod *PodResource, args *Args) []string {
+	rows := []string{}
+	for _, c := range pod.Containers {
+		row := []string{
+			pod.Namespace,
+			pod.Name,
+			c.Name,
+			formatCpu(c.Cpu.Usage),
+			formatCpu(c.Cpu.Request),
+			formatCpu(c.Cpu.Limit),
+			formatMemory(c.Memory.Usage),
+			formatMemory(c.Memory.Request),
+			formatMemory(c.Memory.Limit),
+			"\n",
+		}
+		rows = append(rows, strings.Join(row, "\t"))
+	}
+	return rows
+}
+
+func formatCpu(i int64) string {
+	return strconv.FormatInt(i, 10) + "m"
+}
+
+func formatMemory(i int64) string {
+	mb := int64(float64(i) / (1024 * 1024 * 1024))
+	return strconv.FormatInt(mb, 10) + "Mi"
 }
 
 // GetNewTabWriter returns a tabwriter that translates tabbed columns in input into properly aligned text.

@@ -3,12 +3,13 @@ package client
 import "fmt"
 
 type Resource struct {
-	Request int
-	Limit   int
-	Usage   int
+	Request int64
+	Limit   int64
+	Usage   int64
 }
 
 type ContainerResource struct {
+	Name   string
 	Cpu    *Resource
 	Memory *Resource
 }
@@ -43,14 +44,15 @@ func MergePodResources(resources ...map[string]*PodResource) (map[string]*PodRes
 				merged[key].Node = pod.Node
 			}
 
-			for containerName, container := range pod.Containers {
-				if merged[key].Containers[containerName] == nil {
-					merged[key].Containers[containerName] = &ContainerResource{
+			for _, container := range pod.Containers {
+				if merged[key].Containers[container.Name] == nil {
+					merged[key].Containers[container.Name] = &ContainerResource{
 						Memory: &Resource{},
 						Cpu:    &Resource{},
 					}
 				}
-				c := merged[key].Containers[containerName]
+				c := merged[key].Containers[container.Name]
+				c.Name = container.Name
 				if container.Memory.Request != 0 {
 					c.Memory.Request = container.Memory.Request
 				}

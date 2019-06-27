@@ -66,11 +66,12 @@ func FetchMetrics(cfg *rest.Config, ns string) (map[string]*PodResource, error) 
 		}
 		for _, container := range pod.Containers {
 			res[key].Containers[container.Name] = &ContainerResource{
+				Name: container.Name,
 				Cpu: &Resource{
-					Usage: int(container.Usage.Cpu().MilliValue()),
+					Usage: container.Usage.Cpu().MilliValue(),
 				},
 				Memory: &Resource{
-					Usage: int(container.Usage.Memory().MilliValue()),
+					Usage: container.Usage.Memory().MilliValue(),
 				},
 			}
 		}
@@ -104,13 +105,14 @@ func FetchPods(cfg *rest.Config, ns string) (map[string]*PodResource, error) {
 		}
 		for _, container := range pod.Spec.Containers {
 			res[key].Containers[container.Name] = &ContainerResource{
+				Name: container.Name,
 				Cpu: &Resource{
-					Request: int(container.Resources.Requests.Cpu().MilliValue()),
-					Limit:   int(container.Resources.Limits.Cpu().MilliValue()),
+					Request: container.Resources.Requests.Cpu().MilliValue(),
+					Limit:   container.Resources.Limits.Cpu().MilliValue(),
 				},
 				Memory: &Resource{
-					Request: int(container.Resources.Requests.Memory().MilliValue()),
-					Limit:   int(container.Resources.Limits.Memory().MilliValue()),
+					Request: container.Resources.Requests.Memory().MilliValue(),
+					Limit:   container.Resources.Limits.Memory().MilliValue(),
 				},
 			}
 		}
