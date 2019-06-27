@@ -3,13 +3,8 @@
 format:
 	goimports -l -w -local github.com/howardjohn/kubectl-resources *.go cmd/*.go client/*.go
 
-.PHONY: vendor
-vendor:
-	GO111MODULE=on go mod tidy
-	GO111MODULE=on go mod vendor
-
 .PHONY: install
 install:
-	go install -v
+	GO111MODULE=on go install -v
 
 all: install vendor
