@@ -32,7 +32,9 @@ func Write(response map[string]*PodResource, args *Args) error {
 		resources = append(resources, res)
 	}
 	sortPodResources(resources)
-	simplifyNames(resources)
+	if !args.Verbose {
+		simplifyNames(resources)
+	}
 
 	w := getNewTabWriter(os.Stdout)
 	if _, err := w.Write([]byte(formatHeader(args))); err != nil {
@@ -112,10 +114,16 @@ func formatRow(pod *PodResource, args *Args) []string {
 }
 
 func formatCpu(i int64) string {
+	if i == 0 {
+		return "-"
+	}
 	return strconv.FormatInt(i, 10) + "m"
 }
 
 func formatMemory(i int64) string {
+	if i == 0 {
+		return "-"
+	}
 	mb := int64(float64(i) / (1024 * 1024 * 1024))
 	return strconv.FormatInt(mb, 10) + "Mi"
 }

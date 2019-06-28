@@ -24,6 +24,7 @@ type Args struct {
 	KubeConfig         string
 	NamespaceBlacklist []string
 	Aggregation        Aggregation
+	Verbose            bool
 }
 
 func Run(args *Args) error {

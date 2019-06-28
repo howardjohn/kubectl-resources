@@ -15,6 +15,7 @@ var (
 	kubeConfig         = path.Join(os.Getenv("HOME"), ".kube", "config")
 	namespaceBlacklist = []string{"kube-system"}
 	showContainers     = false
+	verbose            = false
 )
 
 func init() {
@@ -32,6 +33,13 @@ func init() {
 		showContainers,
 		"Include container level details",
 	)
+	rootCmd.PersistentFlags().BoolVarP(
+		&verbose,
+		"verbose",
+		"v",
+		verbose,
+		"Show full resource names",
+	)
 }
 
 var rootCmd = &cobra.Command{
@@ -47,6 +55,7 @@ var rootCmd = &cobra.Command{
 			KubeConfig:         kubeConfig,
 			NamespaceBlacklist: namespaceBlacklist,
 			Aggregation:        aggregation,
+			Verbose:            verbose,
 		}
 		return client.Run(args)
 	},
