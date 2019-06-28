@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/howardjohn/kubectl-resources/util"
 )
 
 const (
@@ -33,7 +35,8 @@ func Write(response map[string]*PodResource, args *Args) error {
 	}
 	sortPodResources(resources)
 	if !args.Verbose {
-		simplifyNames(resources)
+		simplifyPodNames(resources)
+		simplifyNodeNames(resources)
 	}
 
 	w := getNewTabWriter(os.Stdout)
@@ -138,7 +141,7 @@ func formatMemory(i int64) string {
 	return strconv.FormatInt(mb, 10) + "Mi"
 }
 
-func simplifyNames(resources []*PodResource) {
+func simplifyPodNames(resources []*PodResource) {
 	names := map[string]int{}
 	for _, pod := range resources {
 		parts := strings.Split(pod.Name, "-")
@@ -147,12 +150,27 @@ func simplifyNames(resources []*PodResource) {
 	}
 	for _, pod := range resources {
 		parts := strings.Split(pod.Name, "-")
+		// Skip pods that don't follow assumptions
+		if len(parts) < 3 {
+			continue
+		}
 		shortName := strings.Join(parts[:len(parts)-2], "-")
 		if names[shortName] > 1 {
 			pod.Name = shortName + "-" + parts[len(parts)-1]
 		} else {
 			pod.Name = shortName
 		}
+	}
+}
+
+func simplifyNodeNames(resources []*PodResource) {
+	var nameParts []util.Part
+	for _, pod := range resources {
+		nameParts = append(nameParts, strings.Split(pod.Node, "-"))
+	}
+	lcp := strings.Join(util.LongestCommonPrefix(nameParts), "-") + "-"
+	for _, pod := range resources {
+		pod.Node = strings.TrimPrefix(pod.Node, lcp)
 	}
 }
 
