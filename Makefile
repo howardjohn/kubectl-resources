@@ -7,4 +7,4 @@ format:
 install:
 	GO111MODULE=on go install -v
 
-all: install vendor
+all: format install

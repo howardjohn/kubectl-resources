@@ -12,6 +12,7 @@ import (
 )
 
 type Aggregation int
+
 const (
 	None Aggregation = iota
 	Pod
@@ -19,10 +20,10 @@ const (
 )
 
 type Args struct {
-	Namespace  string
-	KubeConfig string
+	Namespace          string
+	KubeConfig         string
 	NamespaceBlacklist []string
-	Aggregation Aggregation
+	Aggregation        Aggregation
 }
 
 func Run(args *Args) error {
