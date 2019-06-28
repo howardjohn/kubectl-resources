@@ -8,3 +8,4 @@ pull_request_rules:
       merge:
         method: squash
         strict: false
+      delete_head_branch: {}
