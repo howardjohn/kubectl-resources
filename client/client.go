@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -32,17 +33,39 @@ func Run(args *Args) error {
 	if err != nil {
 		return fmt.Errorf("failed to get kubeconfig: %v", err)
 	}
-	metricsResponse, err := FetchMetrics(config, args.Namespace)
-	if err != nil {
-		return fmt.Errorf("failed to fetch metrics: %v", err)
+
+	responseChan := make(chan map[string]*PodResource, 2)
+	errChan := make(chan error, 2)
+	go func() {
+		metricsResponse, err := FetchMetrics(config, args.Namespace)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch metrics: %v", err)
+		} else {
+			responseChan <- metricsResponse
+		}
+	}()
+	go func() {
+		podResponse, err := FetchPods(config, args.Namespace)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to fetch pod: %v", err)
+		} else {
+			responseChan <- podResponse
+		}
+	}()
+
+	var responses []map[string]*PodResource
+	got := 0
+	for got < 2 {
+		select {
+		case res := <-responseChan:
+			responses = append(responses, res)
+		case err := <-errChan:
+			_, _ = fmt.Fprintf(os.Stderr, "warning: %v\n", err)
+		}
+		got++
 	}
 
-	podResponse, err := FetchPods(config, args.Namespace)
-	if err != nil {
-		return fmt.Errorf("failed to fetch pod: %v", err)
-	}
-
-	resources, err := MergePodResources(metricsResponse, podResponse)
+	resources, err := MergePodResources(responses...)
 	if err != nil {
 		return fmt.Errorf("failed to merge responses: %v", err)
 	}
