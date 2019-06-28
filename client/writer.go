@@ -51,10 +51,19 @@ func Write(response map[string]*PodResource, args *Args) error {
 }
 
 func formatHeader(args *Args) string {
-	headers := []string{
-		"NAMESPACE",
-		"POD",
-		"CONTAINER",
+	var headers []string
+	switch args.Aggregation {
+	case None:
+		headers = append(headers, "NAMESPACE",
+			"POD",
+			"CONTAINER")
+	case Pod:
+		headers = append(headers, "NAMESPACE",
+			"POD")
+	case Namespace:
+		headers = append(headers, "NAMESPACE")
+	}
+	headers = append(headers,
 		"CPU USE",
 		"CPU REQ",
 		"CPU LIM",
@@ -62,23 +71,39 @@ func formatHeader(args *Args) string {
 		"MEM REQ",
 		"MEM LIM",
 		"\n",
-	}
+	)
 	return strings.Join(headers, "\t")
 }
 
 func formatRow(pod *PodResource, args *Args) []string {
 	rows := []string{}
-	for _, c := range pod.Containers {
+	switch args.Aggregation {
+	case None:
+		for _, c := range pod.Containers {
+			row := []string{
+				pod.Namespace,
+				pod.Name,
+				c.Name,
+				formatCpu(c.Cpu.Usage),
+				formatCpu(c.Cpu.Request),
+				formatCpu(c.Cpu.Limit),
+				formatMemory(c.Memory.Usage),
+				formatMemory(c.Memory.Request),
+				formatMemory(c.Memory.Limit),
+				"\n",
+			}
+			rows = append(rows, strings.Join(row, "\t"))
+		}
+	case Pod:
 		row := []string{
 			pod.Namespace,
 			pod.Name,
-			c.Name,
-			formatCpu(c.Cpu.Usage),
-			formatCpu(c.Cpu.Request),
-			formatCpu(c.Cpu.Limit),
-			formatMemory(c.Memory.Usage),
-			formatMemory(c.Memory.Request),
-			formatMemory(c.Memory.Limit),
+			formatCpu(pod.Cpu().Usage),
+			formatCpu(pod.Cpu().Request),
+			formatCpu(pod.Cpu().Limit),
+			formatMemory(pod.Memory().Usage),
+			formatMemory(pod.Memory().Request),
+			formatMemory(pod.Memory().Limit),
 			"\n",
 		}
 		rows = append(rows, strings.Join(row, "\t"))
@@ -106,8 +131,7 @@ func simplifyNames(resources []*PodResource) {
 		parts := strings.Split(pod.Name, "-")
 		shortName := strings.Join(parts[:len(parts)-2], "-")
 		if names[shortName] > 1 {
-			// TODO consider removing deployment uid
-			//pod.Name = pod.Name
+			pod.Name = shortName + "-" + parts[len(parts)-1]
 		} else {
 			pod.Name = shortName
 		}

@@ -21,6 +21,26 @@ type PodResource struct {
 	Containers map[string]*ContainerResource
 }
 
+func (p *PodResource) Cpu() *Resource {
+	res := &Resource{}
+	for _, container := range p.Containers {
+		res.Limit += container.Cpu.Limit
+		res.Request += container.Cpu.Request
+		res.Usage += container.Cpu.Usage
+	}
+	return res
+}
+
+func (p *PodResource) Memory() *Resource {
+	res := &Resource{}
+	for _, container := range p.Containers {
+		res.Limit += container.Memory.Limit
+		res.Request += container.Memory.Request
+		res.Usage += container.Memory.Usage
+	}
+	return res
+}
+
 func MergePodResources(resources ...map[string]*PodResource) (map[string]*PodResource, error) {
 	merged := map[string]*PodResource{}
 	for _, resource := range resources {

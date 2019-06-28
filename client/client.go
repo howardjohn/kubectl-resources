@@ -11,10 +11,18 @@ import (
 	metrics "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
+type Aggregation int
+const (
+	None Aggregation = iota
+	Pod
+	Namespace
+)
+
 type Args struct {
 	Namespace  string
 	KubeConfig string
 	NamespaceBlacklist []string
+	Aggregation Aggregation
 }
 
 func Run(args *Args) error {
