@@ -15,6 +15,7 @@ var (
 	kubeConfig         = path.Join(os.Getenv("HOME"), ".kube", "config")
 	namespaceBlacklist = []string{"kube-system"}
 	showContainers     = false
+	showNodes          = false
 	verbose            = false
 )
 
@@ -24,21 +25,28 @@ func init() {
 		"namespace",
 		"n",
 		namespace,
-		"Namespace to query. If not set, all namespaces are included",
+		"namespace to query. If not set, all namespaces are included",
 	)
 	rootCmd.PersistentFlags().BoolVarP(
 		&showContainers,
 		"show-containers",
 		"c",
 		showContainers,
-		"Include container level details",
+		"include container level details",
+	)
+	rootCmd.PersistentFlags().BoolVarP(
+		&showNodes,
+		"show-nodes",
+		"d",
+		showNodes,
+		"include node names",
 	)
 	rootCmd.PersistentFlags().BoolVarP(
 		&verbose,
 		"verbose",
 		"v",
 		verbose,
-		"Show full resource names",
+		"show full resource names",
 	)
 }
 
@@ -56,6 +64,7 @@ var rootCmd = &cobra.Command{
 			NamespaceBlacklist: namespaceBlacklist,
 			Aggregation:        aggregation,
 			Verbose:            verbose,
+			ShowNodes:          showNodes,
 		}
 		return client.Run(args)
 	},

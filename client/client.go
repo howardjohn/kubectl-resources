@@ -26,6 +26,7 @@ type Args struct {
 	NamespaceBlacklist []string
 	Aggregation        Aggregation
 	Verbose            bool
+	ShowNodes          bool
 }
 
 func Run(args *Args) error {

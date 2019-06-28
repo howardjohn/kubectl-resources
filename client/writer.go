@@ -56,14 +56,14 @@ func formatHeader(args *Args) string {
 	var headers []string
 	switch args.Aggregation {
 	case None:
-		headers = append(headers, "NAMESPACE",
-			"POD",
-			"CONTAINER")
+		headers = append(headers, "NAMESPACE", "POD", "CONTAINER")
 	case Pod:
-		headers = append(headers, "NAMESPACE",
-			"POD")
+		headers = append(headers, "NAMESPACE", "POD")
 	case Namespace:
 		headers = append(headers, "NAMESPACE")
+	}
+	if args.ShowNodes {
+		headers = append(headers, "NODE")
 	}
 	headers = append(headers,
 		"CPU USE",
@@ -86,6 +86,11 @@ func formatRow(pod *PodResource, args *Args) []string {
 				pod.Namespace,
 				pod.Name,
 				c.Name,
+			}
+			if args.ShowNodes {
+				row = append(row, pod.Node)
+			}
+			row = append(row,
 				formatCpu(c.Cpu.Usage),
 				formatCpu(c.Cpu.Request),
 				formatCpu(c.Cpu.Limit),
@@ -93,13 +98,18 @@ func formatRow(pod *PodResource, args *Args) []string {
 				formatMemory(c.Memory.Request),
 				formatMemory(c.Memory.Limit),
 				"\n",
-			}
+			)
 			rows = append(rows, strings.Join(row, "\t"))
 		}
 	case Pod:
 		row := []string{
 			pod.Namespace,
 			pod.Name,
+		}
+		if args.ShowNodes {
+			row = append(row, pod.Node)
+		}
+		row = append(row,
 			formatCpu(pod.Cpu().Usage),
 			formatCpu(pod.Cpu().Request),
 			formatCpu(pod.Cpu().Limit),
@@ -107,7 +117,7 @@ func formatRow(pod *PodResource, args *Args) []string {
 			formatMemory(pod.Memory().Request),
 			formatMemory(pod.Memory().Limit),
 			"\n",
-		}
+		)
 		rows = append(rows, strings.Join(row, "\t"))
 	}
 	return rows
