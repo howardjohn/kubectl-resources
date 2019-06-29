@@ -20,3 +20,8 @@ test:
 .PHONY: run
 run:
 	GO111MODULE=on go run main.go
+
+.PHONY: deps
+deps:
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint
+	go get golang.org/x/tools/cmd/goimports
