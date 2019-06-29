@@ -12,6 +12,7 @@ pull_request_rules:
       delete_head_branch: {}
   - name: automatic merge for admin
     conditions:
+      - "status-success=buildkite/build"
       - "author=howardjohn"
       - "label!=do not merge"
     actions:
