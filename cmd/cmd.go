@@ -60,6 +60,9 @@ var rootCmd = &cobra.Command{
 		if showContainers {
 			aggregation = model.None
 		}
+		if kc, f := os.LookupEnv("KUBECONFIG"); f {
+			kubeConfig = kc
+		}
 		args := &model.Args{
 			Namespace:          namespace,
 			KubeConfig:         kubeConfig,
