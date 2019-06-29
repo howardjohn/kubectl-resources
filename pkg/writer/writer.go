@@ -1,4 +1,4 @@
-package client
+package writer
 
 import (
 	"fmt"
@@ -9,7 +9,9 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/howardjohn/kubectl-resources/util"
+	"github.com/howardjohn/kubectl-resources/pkg/model"
+
+	"github.com/howardjohn/kubectl-resources/pkg/util"
 )
 
 const (
@@ -19,7 +21,7 @@ const (
 	tabwriterPadChar  = '\t'
 )
 
-func sortPodResources(res []*PodResource) {
+func sortPodResources(res []*model.PodResource) {
 	sort.Slice(res, func(i, j int) bool {
 		if res[i].Namespace != res[j].Namespace {
 			return res[i].Namespace < res[j].Namespace
@@ -28,8 +30,8 @@ func sortPodResources(res []*PodResource) {
 	})
 }
 
-func Write(response map[string]*PodResource, args *Args) error {
-	resources := make([]*PodResource, 0, len(response))
+func Write(response map[string]*model.PodResource, args *model.Args) error {
+	resources := make([]*model.PodResource, 0, len(response))
 	for _, res := range response {
 		resources = append(resources, res)
 	}
@@ -55,14 +57,14 @@ func Write(response map[string]*PodResource, args *Args) error {
 	return w.Flush()
 }
 
-func formatHeader(args *Args) string {
+func formatHeader(args *model.Args) string {
 	var headers []string
 	switch args.Aggregation {
-	case None:
+	case model.None:
 		headers = append(headers, "NAMESPACE", "POD", "CONTAINER")
-	case Pod:
+	case model.Pod:
 		headers = append(headers, "NAMESPACE", "POD")
-	case Namespace:
+	case model.Namespace:
 		headers = append(headers, "NAMESPACE")
 	}
 	if args.ShowNodes {
@@ -80,10 +82,10 @@ func formatHeader(args *Args) string {
 	return strings.Join(headers, "\t")
 }
 
-func formatRow(pod *PodResource, args *Args) []string {
+func formatRow(pod *model.PodResource, args *model.Args) []string {
 	rows := []string{}
 	switch args.Aggregation {
-	case None:
+	case model.None:
 		for _, c := range pod.Containers {
 			row := []string{
 				pod.Namespace,
@@ -104,7 +106,7 @@ func formatRow(pod *PodResource, args *Args) []string {
 			)
 			rows = append(rows, strings.Join(row, "\t"))
 		}
-	case Pod:
+	case model.Pod:
 		row := []string{
 			pod.Namespace,
 			pod.Name,
@@ -141,7 +143,7 @@ func formatMemory(i int64) string {
 	return strconv.FormatInt(mb, 10) + "Mi"
 }
 
-func simplifyPodNames(resources []*PodResource) {
+func simplifyPodNames(resources []*model.PodResource) {
 	names := map[string]int{}
 	for _, pod := range resources {
 		parts := strings.Split(pod.Name, "-")
@@ -163,7 +165,7 @@ func simplifyPodNames(resources []*PodResource) {
 	}
 }
 
-func simplifyNodeNames(resources []*PodResource) {
+func simplifyNodeNames(resources []*model.PodResource) {
 	var nameParts []util.Part
 	for _, pod := range resources {
 		nameParts = append(nameParts, strings.Split(pod.Node, "-"))

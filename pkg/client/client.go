@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/howardjohn/kubectl-resources/pkg/model"
+	"github.com/howardjohn/kubectl-resources/pkg/writer"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -12,30 +15,13 @@ import (
 	metrics "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
-type Aggregation int
-
-const (
-	None Aggregation = iota
-	Pod
-	Namespace
-)
-
-type Args struct {
-	Namespace          string
-	KubeConfig         string
-	NamespaceBlacklist []string
-	Aggregation        Aggregation
-	Verbose            bool
-	ShowNodes          bool
-}
-
-func Run(args *Args) error {
+func Run(args *model.Args) error {
 	config, err := clientcmd.BuildConfigFromFlags("", args.KubeConfig)
 	if err != nil {
 		return fmt.Errorf("failed to get kubeconfig: %v", err)
 	}
 
-	responseChan := make(chan map[string]*PodResource, 2)
+	responseChan := make(chan map[string]*model.PodResource, 2)
 	errChan := make(chan error, 2)
 	go func() {
 		metricsResponse, err := FetchMetrics(config, args.Namespace)
@@ -54,7 +40,7 @@ func Run(args *Args) error {
 		}
 	}()
 
-	var responses []map[string]*PodResource
+	var responses []map[string]*model.PodResource
 	got := 0
 	for got < 2 {
 		select {
@@ -66,20 +52,20 @@ func Run(args *Args) error {
 		got++
 	}
 
-	resources, err := MergePodResources(responses...)
+	resources, err := model.MergePodResources(responses...)
 	if err != nil {
 		return fmt.Errorf("failed to merge responses: %v", err)
 	}
 
 	filterBlacklist(resources, args.NamespaceBlacklist)
 
-	if err := Write(resources, args); err != nil {
+	if err := writer.Write(resources, args); err != nil {
 		return fmt.Errorf("faild to write: %v", err)
 	}
 	return nil
 }
 
-func filterBlacklist(resources map[string]*PodResource, blacklist []string) {
+func filterBlacklist(resources map[string]*model.PodResource, blacklist []string) {
 	blMap := make(map[string]struct{})
 	for _, ns := range blacklist {
 		blMap[ns] = struct{}{}
@@ -91,7 +77,7 @@ func filterBlacklist(resources map[string]*PodResource, blacklist []string) {
 	}
 }
 
-func FetchMetrics(cfg *rest.Config, ns string) (map[string]*PodResource, error) {
+func FetchMetrics(cfg *rest.Config, ns string) (map[string]*model.PodResource, error) {
 	metricsclient, err := metrics.NewForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create metrics client: %v", err)
@@ -105,21 +91,21 @@ func FetchMetrics(cfg *rest.Config, ns string) (map[string]*PodResource, error) 
 		fmt.Println("Continue:", podList.Continue)
 	}
 
-	res := map[string]*PodResource{}
+	res := map[string]*model.PodResource{}
 	for _, pod := range podList.Items {
 		key := uid(pod.Name, pod.Namespace)
-		res[key] = &PodResource{
+		res[key] = &model.PodResource{
 			Name:       pod.Name,
 			Namespace:  pod.Namespace,
-			Containers: make(map[string]*ContainerResource),
+			Containers: make(map[string]*model.ContainerResource),
 		}
 		for _, container := range pod.Containers {
-			res[key].Containers[container.Name] = &ContainerResource{
+			res[key].Containers[container.Name] = &model.ContainerResource{
 				Name: container.Name,
-				Cpu: &Resource{
+				Cpu: &model.Resource{
 					Usage: container.Usage.Cpu().MilliValue(),
 				},
-				Memory: &Resource{
+				Memory: &model.Resource{
 					Usage: container.Usage.Memory().MilliValue(),
 				},
 			}
@@ -129,7 +115,7 @@ func FetchMetrics(cfg *rest.Config, ns string) (map[string]*PodResource, error) 
 	return res, nil
 }
 
-func FetchPods(cfg *rest.Config, ns string) (map[string]*PodResource, error) {
+func FetchPods(cfg *rest.Config, ns string) (map[string]*model.PodResource, error) {
 	clientset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -142,24 +128,24 @@ func FetchPods(cfg *rest.Config, ns string) (map[string]*PodResource, error) {
 		fmt.Println("Continue:", podList.Continue)
 	}
 
-	res := map[string]*PodResource{}
+	res := map[string]*model.PodResource{}
 	for _, pod := range podList.Items {
 		key := uid(pod.Name, pod.Namespace)
 
-		res[key] = &PodResource{
+		res[key] = &model.PodResource{
 			Name:       pod.Name,
 			Namespace:  pod.Namespace,
 			Node:       pod.Spec.NodeName,
-			Containers: make(map[string]*ContainerResource),
+			Containers: make(map[string]*model.ContainerResource),
 		}
 		for _, container := range pod.Spec.Containers {
-			res[key].Containers[container.Name] = &ContainerResource{
+			res[key].Containers[container.Name] = &model.ContainerResource{
 				Name: container.Name,
-				Cpu: &Resource{
+				Cpu: &model.Resource{
 					Request: container.Resources.Requests.Cpu().MilliValue(),
 					Limit:   container.Resources.Limits.Cpu().MilliValue(),
 				},
-				Memory: &Resource{
+				Memory: &model.Resource{
 					Request: container.Resources.Requests.Memory().MilliValue(),
 					Limit:   container.Resources.Limits.Memory().MilliValue(),
 				},

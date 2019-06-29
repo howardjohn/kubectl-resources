@@ -5,9 +5,11 @@ import (
 	"os"
 	"path"
 
+	"github.com/howardjohn/kubectl-resources/pkg/model"
+
 	"github.com/spf13/cobra"
 
-	"github.com/howardjohn/kubectl-resources/client"
+	"github.com/howardjohn/kubectl-resources/pkg/client"
 )
 
 var (
@@ -54,11 +56,11 @@ var rootCmd = &cobra.Command{
 	Use:   "kubectl-resources",
 	Short: "Plugin to access Kubernetes resource requests, limits, and usage.",
 	RunE: func(cmd *cobra.Command, a []string) error {
-		aggregation := client.Pod
+		aggregation := model.Pod
 		if showContainers {
-			aggregation = client.None
+			aggregation = model.None
 		}
-		args := &client.Args{
+		args := &model.Args{
 			Namespace:          namespace,
 			KubeConfig:         kubeConfig,
 			NamespaceBlacklist: namespaceBlacklist,
