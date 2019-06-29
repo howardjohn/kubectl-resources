@@ -2,4 +2,4 @@ steps:
   - command: "make"
     plugins:
       - docker#v3.2.0:
-        image: "golang:1.12"
+          image: "golang:1.12"
