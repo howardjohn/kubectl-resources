@@ -64,7 +64,6 @@ var rootCmd = &cobra.Command{
 		if kc, f := os.LookupEnv("KUBECONFIG"); f {
 			kubeConfig = kc
 		}
-		agg = model.Node
 		args := &model.Args{
 			Namespace:          namespace,
 			KubeConfig:         kubeConfig,
