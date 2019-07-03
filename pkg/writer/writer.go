@@ -162,7 +162,9 @@ func simplifyPodNames(resources []*model.PodResource) {
 func simplifyNodeNames(resources []*model.PodResource) {
 	var nameParts []util.Part
 	for _, pod := range resources {
-		nameParts = append(nameParts, strings.Split(pod.Node, "-"))
+		if len(pod.Node) > 0 {
+			nameParts = append(nameParts, strings.Split(pod.Node, "-"))
+		}
 	}
 	lcp := strings.Join(util.LongestCommonPrefix(nameParts), "-") + "-"
 	for _, pod := range resources {
