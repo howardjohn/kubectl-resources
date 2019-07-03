@@ -38,7 +38,10 @@ func SortRows(res []*ResourceRow) {
 		if res[i].Name != res[j].Name {
 			return res[i].Name < res[j].Name
 		}
-		return res[i].Container < res[j].Container
+		if res[i].Container != res[j].Container {
+			return res[i].Container < res[j].Container
+		}
+		return res[i].Node < res[j].Node
 	})
 }
 
@@ -71,15 +74,34 @@ func AggregateRows(rows []*ResourceRow, aggregation model.Aggregation) []*Resour
 		key := getKey(row)
 		cur, f := rowMap[key]
 		if f {
+			clearKeys(cur, aggregation)
 			cur.Cpu.Merge(row.Cpu)
 			cur.Memory.Merge(row.Memory)
 		} else {
 			rowMap[key] = row
 		}
 	}
-	result := []*ResourceRow{}
+	var result []*ResourceRow
 	for _, row := range rowMap {
 		result = append(result, row)
 	}
 	return result
+}
+
+func clearKeys(row *ResourceRow, aggregation model.Aggregation) {
+	switch aggregation {
+	case model.Total:
+		fallthrough
+	case model.Node:
+		row.Namespace = ""
+		fallthrough
+	case model.Namespace:
+		row.Name = ""
+		fallthrough
+	case model.Pod:
+		row.Container = ""
+		fallthrough
+	case model.Container:
+		return
+	}
 }

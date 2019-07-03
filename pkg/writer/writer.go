@@ -70,6 +70,16 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 	return w.Flush()
 }
 
+func showNode(args *model.Args) bool {
+	if args.Aggregation == model.Node {
+		return true
+	}
+	if !args.ShowNodes {
+		return false
+	}
+	return args.Aggregation == model.Pod || args.Aggregation == model.Container
+}
+
 func formatHeader(args *model.Args) string {
 	var headers []string
 	switch args.Aggregation {
@@ -80,7 +90,7 @@ func formatHeader(args *model.Args) string {
 	case model.Namespace:
 		headers = append(headers, "NAMESPACE")
 	}
-	if args.ShowNodes {
+	if showNode(args) {
 		headers = append(headers, "NODE")
 	}
 	headers = append(headers,
@@ -105,7 +115,7 @@ func formatRowNew(row *ResourceRow, args *model.Args) string {
 	case model.Namespace:
 		out = append(out, row.Namespace)
 	}
-	if args.ShowNodes {
+	if showNode(args) {
 		out = append(out, row.Node)
 	}
 	out = append(out,

@@ -16,7 +16,6 @@ var (
 	namespace          = ""
 	kubeConfig         = path.Join(os.Getenv("HOME"), ".kube", "config")
 	namespaceBlacklist = []string{"kube-system"}
-	showContainers     = false
 	showNodes          = false
 	verbose            = false
 	aggregation        = "POD"
@@ -29,13 +28,6 @@ func init() {
 		"n",
 		namespace,
 		"namespace to query. If not set, all namespaces are included",
-	)
-	rootCmd.PersistentFlags().BoolVarP(
-		&showContainers,
-		"show-containers",
-		"c",
-		showContainers,
-		"include container level details",
 	)
 	rootCmd.PersistentFlags().BoolVarP(
 		&showNodes,
@@ -72,6 +64,7 @@ var rootCmd = &cobra.Command{
 		if kc, f := os.LookupEnv("KUBECONFIG"); f {
 			kubeConfig = kc
 		}
+		agg = model.Node
 		args := &model.Args{
 			Namespace:          namespace,
 			KubeConfig:         kubeConfig,
