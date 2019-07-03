@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	tabwriterMinWidth = 8
+	tabwriterMinWidth = 0
 	tabwriterWidth    = 8
-	tabwriterPadding  = 1
-	tabwriterPadChar  = '\t'
+	tabwriterPadding  = 2
+	tabwriterPadChar  = ' '
 )
 
 func Write(response map[string]*model.PodResource, args *model.Args) error {
@@ -50,13 +50,15 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 		}
 	}
 
-	footer := AggregateRows(allRows, model.Total)[0]
-	footer.Name = ""
-	footer.Node = ""
-	footer.Namespace = ""
-	footer.Container = ""
-	if _, err := w.Write([]byte(formatRow(footer, args))); err != nil {
-		return fmt.Errorf("write failed: %v", err)
+	if args.Aggregation != model.Total {
+		footer := AggregateRows(allRows, model.Total)[0]
+		footer.Name = ""
+		footer.Node = ""
+		footer.Namespace = ""
+		footer.Container = ""
+		if _, err := w.Write([]byte(formatRow(footer, args))); err != nil {
+			return fmt.Errorf("write failed: %v", err)
+		}
 	}
 
 	return w.Flush()
