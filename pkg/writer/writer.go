@@ -45,7 +45,7 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 	SortRows(rows)
 
 	for _, row := range rows {
-		if _, err := w.Write([]byte(formatRowNew(row, args))); err != nil {
+		if _, err := w.Write([]byte(formatRow(row, args))); err != nil {
 			return fmt.Errorf("write failed: %v", err)
 		}
 	}
@@ -55,17 +55,9 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 	footer.Node = ""
 	footer.Namespace = ""
 	footer.Container = ""
-	if _, err := w.Write([]byte(formatRowNew(footer, args))); err != nil {
+	if _, err := w.Write([]byte(formatRow(footer, args))); err != nil {
 		return fmt.Errorf("write failed: %v", err)
 	}
-	//for _, res := range resources {
-	//	rows := formatRow(res, args)
-	//	for _, row := range rows {
-	//		if _, err := w.Write([]byte(row)); err != nil {
-	//			return fmt.Errorf("write failed: %v", err)
-	//		}
-	//	}
-	//}
 
 	return w.Flush()
 }
@@ -105,7 +97,7 @@ func formatHeader(args *model.Args) string {
 	return strings.Join(headers, "\t")
 }
 
-func formatRowNew(row *ResourceRow, args *model.Args) string {
+func formatRow(row *ResourceRow, args *model.Args) string {
 	var out []string
 	switch args.Aggregation {
 	case model.Container:
@@ -128,52 +120,6 @@ func formatRowNew(row *ResourceRow, args *model.Args) string {
 		"\n",
 	)
 	return strings.Join(out, "\t")
-}
-
-func formatRow(pod *model.PodResource, args *model.Args) []string {
-	rows := []string{}
-	switch args.Aggregation {
-	case model.Container:
-		for _, c := range pod.Containers {
-			row := []string{
-				pod.Namespace,
-				pod.Name,
-				c.Name,
-			}
-			if args.ShowNodes {
-				row = append(row, pod.Node)
-			}
-			row = append(row,
-				formatCpu(c.Cpu.Usage),
-				formatCpu(c.Cpu.Request),
-				formatCpu(c.Cpu.Limit),
-				formatMemory(c.Memory.Usage),
-				formatMemory(c.Memory.Request),
-				formatMemory(c.Memory.Limit),
-				"\n",
-			)
-			rows = append(rows, strings.Join(row, "\t"))
-		}
-	case model.Pod:
-		row := []string{
-			pod.Namespace,
-			pod.Name,
-		}
-		if args.ShowNodes {
-			row = append(row, pod.Node)
-		}
-		row = append(row,
-			formatCpu(pod.Cpu().Usage),
-			formatCpu(pod.Cpu().Request),
-			formatCpu(pod.Cpu().Limit),
-			formatMemory(pod.Memory().Usage),
-			formatMemory(pod.Memory().Request),
-			formatMemory(pod.Memory().Limit),
-			"\n",
-		)
-		rows = append(rows, strings.Join(row, "\t"))
-	}
-	return rows
 }
 
 func formatCpu(i int64) string {
