@@ -8,6 +8,12 @@ type Resource struct {
 	Usage   int64
 }
 
+func (r *Resource) Merge(other *Resource) {
+	r.Request += other.Request
+	r.Limit += other.Limit
+	r.Usage += other.Usage
+}
+
 type ContainerResource struct {
 	Name   string
 	Cpu    *Resource

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -21,21 +20,12 @@ const (
 	tabwriterPadChar  = '\t'
 )
 
-func sortPodResources(res []*model.PodResource) {
-	sort.Slice(res, func(i, j int) bool {
-		if res[i].Namespace != res[j].Namespace {
-			return res[i].Namespace < res[j].Namespace
-		}
-		return res[i].Name < res[j].Name
-	})
-}
-
 func Write(response map[string]*model.PodResource, args *model.Args) error {
 	resources := make([]*model.PodResource, 0, len(response))
 	for _, res := range response {
 		resources = append(resources, res)
 	}
-	sortPodResources(resources)
+
 	if !args.Verbose {
 		simplifyPodNames(resources)
 		simplifyNodeNames(resources)
@@ -45,14 +35,37 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 	if _, err := w.Write([]byte(formatHeader(args))); err != nil {
 		return fmt.Errorf("write failed: %v", err)
 	}
-	for _, res := range resources {
-		rows := formatRow(res, args)
-		for _, row := range rows {
-			if _, err := w.Write([]byte(row)); err != nil {
-				return fmt.Errorf("write failed: %v", err)
-			}
+
+	var allRows []*ResourceRow
+	for _, pod := range resources {
+		allRows = append(allRows, PodToRows(pod)...)
+	}
+
+	rows := AggregateRows(allRows, args.Aggregation)
+	SortRows(rows)
+
+	for _, row := range rows {
+		if _, err := w.Write([]byte(formatRowNew(row, args))); err != nil {
+			return fmt.Errorf("write failed: %v", err)
 		}
 	}
+
+	footer := AggregateRows(allRows, model.Total)[0]
+	footer.Name = ""
+	footer.Node = ""
+	footer.Namespace = ""
+	footer.Container = ""
+	if _, err := w.Write([]byte(formatRowNew(footer, args))); err != nil {
+		return fmt.Errorf("write failed: %v", err)
+	}
+	//for _, res := range resources {
+	//	rows := formatRow(res, args)
+	//	for _, row := range rows {
+	//		if _, err := w.Write([]byte(row)); err != nil {
+	//			return fmt.Errorf("write failed: %v", err)
+	//		}
+	//	}
+	//}
 
 	return w.Flush()
 }
@@ -60,7 +73,7 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 func formatHeader(args *model.Args) string {
 	var headers []string
 	switch args.Aggregation {
-	case model.None:
+	case model.Container:
 		headers = append(headers, "NAMESPACE", "POD", "CONTAINER")
 	case model.Pod:
 		headers = append(headers, "NAMESPACE", "POD")
@@ -82,10 +95,35 @@ func formatHeader(args *model.Args) string {
 	return strings.Join(headers, "\t")
 }
 
+func formatRowNew(row *ResourceRow, args *model.Args) string {
+	var out []string
+	switch args.Aggregation {
+	case model.Container:
+		out = append(out, row.Namespace, row.Name, row.Container)
+	case model.Pod:
+		out = append(out, row.Namespace, row.Name)
+	case model.Namespace:
+		out = append(out, row.Namespace)
+	}
+	if args.ShowNodes {
+		out = append(out, row.Node)
+	}
+	out = append(out,
+		formatCpu(row.Cpu.Usage),
+		formatCpu(row.Cpu.Request),
+		formatCpu(row.Cpu.Limit),
+		formatMemory(row.Memory.Usage),
+		formatMemory(row.Memory.Request),
+		formatMemory(row.Memory.Limit),
+		"\n",
+	)
+	return strings.Join(out, "\t")
+}
+
 func formatRow(pod *model.PodResource, args *model.Args) []string {
 	rows := []string{}
 	switch args.Aggregation {
-	case model.None:
+	case model.Container:
 		for _, c := range pod.Containers {
 			row := []string{
 				pod.Namespace,

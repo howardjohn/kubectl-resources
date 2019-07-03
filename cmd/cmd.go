@@ -19,6 +19,7 @@ var (
 	showContainers     = false
 	showNodes          = false
 	verbose            = false
+	aggregation        = "POD"
 )
 
 func init() {
@@ -50,16 +51,24 @@ func init() {
 		verbose,
 		"show full resource names",
 	)
+	rootCmd.PersistentFlags().StringVarP(
+		&aggregation,
+		"by",
+		"b",
+		aggregation,
+		"column to aggregate on. Default is pod",
+	)
 }
 
 var rootCmd = &cobra.Command{
 	Use:   "kubectl-resources",
 	Short: "Plugin to access Kubernetes resource requests, limits, and usage.",
 	RunE: func(cmd *cobra.Command, a []string) error {
-		aggregation := model.Pod
-		if showContainers {
-			aggregation = model.None
+		agg, err := model.AggregationFromString(aggregation)
+		if err != nil {
+			return err
 		}
+
 		if kc, f := os.LookupEnv("KUBECONFIG"); f {
 			kubeConfig = kc
 		}
@@ -67,7 +76,7 @@ var rootCmd = &cobra.Command{
 			Namespace:          namespace,
 			KubeConfig:         kubeConfig,
 			NamespaceBlacklist: namespaceBlacklist,
-			Aggregation:        aggregation,
+			Aggregation:        agg,
 			Verbose:            verbose,
 			ShowNodes:          showNodes,
 		}
