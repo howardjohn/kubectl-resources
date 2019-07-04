@@ -2,15 +2,13 @@ package writer
 
 import (
 	"fmt"
+	"github.com/howardjohn/kubectl-resources/pkg/model"
+	"github.com/howardjohn/kubectl-resources/pkg/util"
+	"github.com/juju/ansiterm"
 	"io"
 	"os"
 	"strconv"
 	"strings"
-	"text/tabwriter"
-
-	"github.com/howardjohn/kubectl-resources/pkg/model"
-
-	"github.com/howardjohn/kubectl-resources/pkg/util"
 )
 
 const (
@@ -19,6 +17,30 @@ const (
 	tabwriterPadding  = 2
 	tabwriterPadChar  = ' '
 )
+
+type ColorTabWriter struct {
+	w *ansiterm.TabWriter
+}
+
+func (c ColorTabWriter) Write(s string, color ...ansiterm.Color) {
+	if len(color) > 0 {
+		c.w.SetForeground(color[0])
+	}
+	if _, err := c.w.Write([]byte(s + "\t")); err != nil {
+		panic(err)
+	}
+	c.w.Reset()
+}
+
+func (c ColorTabWriter) WriteEnd(s string, color ...ansiterm.Color) {
+	if len(color) > 0 {
+		c.w.SetForeground(color[0])
+	}
+	if _, err := c.w.Write([]byte(s + "\n")); err != nil {
+		panic(err)
+	}
+	c.w.Reset()
+}
 
 func Write(response map[string]*model.PodResource, args *model.Args) error {
 	resources := make([]*model.PodResource, 0, len(response))
@@ -40,23 +62,35 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 	for _, pod := range resources {
 		allRows = append(allRows, PodToRows(pod)...)
 	}
-
 	rows := AggregateRows(allRows, args.Aggregation)
 	SortRows(rows)
 
 	for _, row := range rows {
-		if _, err := w.Write([]byte(formatRow(row, args))); err != nil {
-			return fmt.Errorf("write failed: %v", err)
-		}
-	}
+		writeRow(row, args, ColorTabWriter{w})
+		//for i, part := range formatRow(row, args) {
+		//	w.Reset()
+		//	if i == 2 {
+		//		w.SetForeground(ansiterm.Green)
+		//	}
+		//	col := ""
+		//	if i > 0 {
+		//		col += "\t"
+		//	}
+		//	col += part
+		//	if _, err := w.Write([]byte(col)); err != nil {
+		//		return fmt.Errorf("write failed: %v", err)
+		//	}
+		//}
 
+	}
+	w.SetForeground(ansiterm.Blue)
 	if args.Aggregation != model.Total {
 		footer := AggregateRows(allRows, model.Total)[0]
 		footer.Name = ""
 		footer.Node = ""
 		footer.Namespace = ""
 		footer.Container = ""
-		if _, err := w.Write([]byte(formatRow(footer, args))); err != nil {
+		if _, err := w.Write([]byte(formatRow(footer, args)[0])); err != nil {
 			return fmt.Errorf("write failed: %v", err)
 		}
 	}
@@ -99,7 +133,32 @@ func formatHeader(args *model.Args) string {
 	return strings.Join(headers, "\t")
 }
 
-func formatRow(row *ResourceRow, args *model.Args) string {
+func writeRow(row *ResourceRow, args *model.Args, w ColorTabWriter) {
+	switch args.Aggregation {
+	case model.Container:
+		w.Write(row.Namespace)
+		w.Write(row.Name)
+		w.Write(row.Container)
+	case model.Pod:
+		w.Write(row.Namespace)
+		w.Write(row.Name)
+	case model.Namespace:
+		w.Write(row.Namespace)
+	}
+	if showNode(args) {
+		w.Write(row.Node)
+	}
+
+	w.Write(formatCpu(row.Cpu.Usage))
+	w.Write(formatCpu(row.Cpu.Request))
+	w.Write(formatCpu(row.Cpu.Limit), ansiterm.Cyan)
+
+	w.Write(formatMemory(row.Memory.Usage))
+	w.Write(formatMemory(row.Memory.Request))
+	w.WriteEnd(formatMemory(row.Memory.Limit))
+}
+
+func formatRow(row *ResourceRow, args *model.Args) []string {
 	var out []string
 	switch args.Aggregation {
 	case model.Container:
@@ -121,7 +180,7 @@ func formatRow(row *ResourceRow, args *model.Args) string {
 		formatMemory(row.Memory.Limit),
 		"\n",
 	)
-	return strings.Join(out, "\t")
+	return out
 }
 
 func formatCpu(i int64) string {
@@ -175,6 +234,6 @@ func simplifyNodeNames(resources []*model.PodResource) {
 }
 
 // GetNewTabWriter returns a tabwriter that translates tabbed columns in input into properly aligned text.
-func getNewTabWriter(output io.Writer) *tabwriter.Writer {
-	return tabwriter.NewWriter(output, tabwriterMinWidth, tabwriterWidth, tabwriterPadding, tabwriterPadChar, 0)
+func getNewTabWriter(output io.Writer) *ansiterm.TabWriter {
+	return ansiterm.NewTabWriter(output, tabwriterMinWidth, tabwriterWidth, tabwriterPadding, tabwriterPadChar, 0)
 }
