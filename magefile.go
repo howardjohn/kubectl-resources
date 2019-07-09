@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -27,7 +28,7 @@ func All() {
 // Run all linters
 func Lint() error {
 	mg.Deps(Deps)
-	return  sh.Run("golangci-lint", "run", "--fix")
+	return sh.Run("golangci-lint", "run", "--fix")
 }
 
 // Run goimports
@@ -70,6 +71,17 @@ func Deps() error {
 				return err
 			}
 		}
+	}
+	return  nil
+}
+
+// Fails if the repo is dirty
+func GitDirty() error {
+	o, err := sh.Output("git", "status", "--porcelain")
+	if o != "" || err != nil {
+		// Show the full status
+		sh.Run("git", "status")
+		return fmt.Errorf("git is dirty")
 	}
 	return nil
 }

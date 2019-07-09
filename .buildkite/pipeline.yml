@@ -2,7 +2,7 @@ steps:
   - commands:
     - go get github.com/magefile/mage
     - mage -v
-    - '[ -z "$(git status --porcelain)" ]'
+    - mage -v gitdirty
     plugins:
       - docker#v3.2.0:
           image: "golang:1.12"
