@@ -2,7 +2,6 @@ package writer
 
 import (
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/howardjohn/kubectl-resources/pkg/model"
@@ -34,31 +33,6 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 	}.WriteRows(allRows)
 
 	return nil
-}
-
-func showNode(args *model.Args) bool {
-	if args.Aggregation == model.Node {
-		return true
-	}
-	if !args.ShowNodes {
-		return false
-	}
-	return args.Aggregation == model.Pod || args.Aggregation == model.Container
-}
-
-func formatCpu(i int64) string {
-	if i == 0 {
-		return "-"
-	}
-	return strconv.FormatInt(i, 10) + "m"
-}
-
-func formatMemory(i int64) string {
-	if i == 0 {
-		return "-"
-	}
-	mb := int64(float64(i) / (1024 * 1024 * 1024))
-	return strconv.FormatInt(mb, 10) + "Mi"
 }
 
 func simplifyPodNames(resources []*model.PodResource) {

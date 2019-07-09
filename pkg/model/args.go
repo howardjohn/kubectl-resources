@@ -12,6 +12,7 @@ type Args struct {
 	Aggregation        Aggregation
 	Verbose            bool
 	ShowNodes          bool
+	ColoredOutput      bool
 }
 
 type Aggregation int
