@@ -72,7 +72,7 @@ func Deps() error {
 			}
 		}
 	}
-	return  nil
+	return nil
 }
 
 // Fails if the repo is dirty
