@@ -27,7 +27,7 @@ func All() {
 // Run all linters
 func Lint() error {
 	mg.Deps(Deps)
-	return sh.Run("golangci-lint", "run", "--fix")
+	return  sh.Run("golangci-lint", "run", "--fix")
 }
 
 // Run goimports
