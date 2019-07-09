@@ -15,7 +15,7 @@ type ColoredTableWriter struct {
 	Args   *model.Args
 }
 
-func (c ColoredTableWriter) WriteRows(allRows []*ResourceRow) {
+func (c ColoredTableWriter) getTableOutput(allRows []*ResourceRow) [][]string {
 	rows := AggregateRows(allRows, c.Args.Aggregation)
 	SortRows(rows)
 
@@ -29,10 +29,43 @@ func (c ColoredTableWriter) WriteRows(allRows []*ResourceRow) {
 	if c.Footer && c.Args.Aggregation != model.Total {
 		output = append(output, formatFooter(allRows, c.Args))
 	}
+	return output
+}
 
-	for _, row := range output {
-		_, _ = fmt.Fprintln(c.Writer, strings.Join(row, "\t"))
+func (c ColoredTableWriter) WriteRows(allRows []*ResourceRow) {
+	output := c.getTableOutput(allRows)
+	if len(output) == 0 {
+		return
 	}
+	sep := getMaxWidths(output)
+	for _, row := range output {
+		for i, col := range row {
+			_, _ = fmt.Fprint(c.Writer, col)
+			if i == len(row)-1 {
+				_, _ = fmt.Fprint(c.Writer, "\n")
+			} else {
+				padAmount := sep[i] - len(col) + 2
+				_, _ = fmt.Fprint(c.Writer, strings.Repeat(" ", padAmount))
+			}
+		}
+	}
+}
+
+func max(x, y int) int {
+	if x < y {
+		return y
+	}
+	return x
+}
+
+func getMaxWidths(output [][]string) []int {
+	widths := make([]int, len(output[0]))
+	for _, row := range output {
+		for i, col := range row {
+			widths[i] = max(widths[i], len(col))
+		}
+	}
+	return widths
 }
 
 func formatHeader(args *model.Args) []string {
