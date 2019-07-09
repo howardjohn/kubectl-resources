@@ -1,23 +1,12 @@
 package writer
 
 import (
-	"fmt"
-	"io"
 	"os"
-	"strconv"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/howardjohn/kubectl-resources/pkg/model"
 
 	"github.com/howardjohn/kubectl-resources/pkg/util"
-)
-
-const (
-	tabwriterMinWidth = 0
-	tabwriterWidth    = 8
-	tabwriterPadding  = 2
-	tabwriterPadChar  = ' '
 )
 
 func Write(response map[string]*model.PodResource, args *model.Args) error {
@@ -31,112 +20,19 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 		simplifyNodeNames(resources)
 	}
 
-	w := getNewTabWriter(os.Stdout)
-	if _, err := w.Write([]byte(formatHeader(args))); err != nil {
-		return fmt.Errorf("write failed: %v", err)
-	}
-
 	var allRows []*ResourceRow
 	for _, pod := range resources {
 		allRows = append(allRows, PodToRows(pod)...)
 	}
 
-	rows := AggregateRows(allRows, args.Aggregation)
-	SortRows(rows)
+	ColoredTableWriter{
+		Writer: os.Stdout,
+		Header: true,
+		Footer: true,
+		Args:   args,
+	}.WriteRows(allRows)
 
-	for _, row := range rows {
-		if _, err := w.Write([]byte(formatRow(row, args))); err != nil {
-			return fmt.Errorf("write failed: %v", err)
-		}
-	}
-
-	if args.Aggregation != model.Total {
-		footer := AggregateRows(allRows, model.Total)[0]
-		footer.Name = ""
-		footer.Node = ""
-		footer.Namespace = ""
-		footer.Container = ""
-		if _, err := w.Write([]byte(formatRow(footer, args))); err != nil {
-			return fmt.Errorf("write failed: %v", err)
-		}
-	}
-
-	return w.Flush()
-}
-
-func showNode(args *model.Args) bool {
-	if args.Aggregation == model.Node {
-		return true
-	}
-	if !args.ShowNodes {
-		return false
-	}
-	return args.Aggregation == model.Pod || args.Aggregation == model.Container
-}
-
-func formatHeader(args *model.Args) string {
-	var headers []string
-	switch args.Aggregation {
-	case model.Container:
-		headers = append(headers, "NAMESPACE", "POD", "CONTAINER")
-	case model.Pod:
-		headers = append(headers, "NAMESPACE", "POD")
-	case model.Namespace:
-		headers = append(headers, "NAMESPACE")
-	}
-	if showNode(args) {
-		headers = append(headers, "NODE")
-	}
-	headers = append(headers,
-		"CPU USE",
-		"CPU REQ",
-		"CPU LIM",
-		"MEM USE",
-		"MEM REQ",
-		"MEM LIM",
-		"\n",
-	)
-	return strings.Join(headers, "\t")
-}
-
-func formatRow(row *ResourceRow, args *model.Args) string {
-	var out []string
-	switch args.Aggregation {
-	case model.Container:
-		out = append(out, row.Namespace, row.Name, row.Container)
-	case model.Pod:
-		out = append(out, row.Namespace, row.Name)
-	case model.Namespace:
-		out = append(out, row.Namespace)
-	}
-	if showNode(args) {
-		out = append(out, row.Node)
-	}
-	out = append(out,
-		formatCpu(row.Cpu.Usage),
-		formatCpu(row.Cpu.Request),
-		formatCpu(row.Cpu.Limit),
-		formatMemory(row.Memory.Usage),
-		formatMemory(row.Memory.Request),
-		formatMemory(row.Memory.Limit),
-		"\n",
-	)
-	return strings.Join(out, "\t")
-}
-
-func formatCpu(i int64) string {
-	if i == 0 {
-		return "-"
-	}
-	return strconv.FormatInt(i, 10) + "m"
-}
-
-func formatMemory(i int64) string {
-	if i == 0 {
-		return "-"
-	}
-	mb := int64(float64(i) / (1024 * 1024 * 1024))
-	return strconv.FormatInt(mb, 10) + "Mi"
+	return nil
 }
 
 func simplifyPodNames(resources []*model.PodResource) {
@@ -172,9 +68,4 @@ func simplifyNodeNames(resources []*model.PodResource) {
 	for _, pod := range resources {
 		pod.Node = strings.TrimPrefix(pod.Node, lcp)
 	}
-}
-
-// GetNewTabWriter returns a tabwriter that translates tabbed columns in input into properly aligned text.
-func getNewTabWriter(output io.Writer) *tabwriter.Writer {
-	return tabwriter.NewWriter(output, tabwriterMinWidth, tabwriterWidth, tabwriterPadding, tabwriterPadChar, 0)
 }

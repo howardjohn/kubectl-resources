@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 
+	isatty "github.com/mattn/go-isatty"
+
 	"github.com/howardjohn/kubectl-resources/pkg/model"
 
 	"github.com/spf13/cobra"
@@ -16,6 +18,7 @@ var (
 	namespace          = ""
 	kubeConfig         = path.Join(os.Getenv("HOME"), ".kube", "config")
 	namespaceBlacklist = []string{"kube-system"}
+	color              = isatty.IsTerminal(os.Stdout.Fd())
 	showNodes          = false
 	verbose            = false
 	aggregation        = "POD"
@@ -71,6 +74,7 @@ var rootCmd = &cobra.Command{
 			Aggregation:        agg,
 			Verbose:            verbose,
 			ShowNodes:          showNodes,
+			ColoredOutput:      color,
 		}
 		return client.Run(args)
 	},
