@@ -54,6 +54,13 @@ func init() {
 		onlyWarnings,
 		"only show resources using excessive resources",
 	)
+	rootCmd.PersistentFlags().BoolVarP(
+		&color,
+		"color",
+		"c",
+		color,
+		"show colors for pods using excessive resources",
+	)
 	rootCmd.PersistentFlags().StringVarP(
 		&aggregation,
 		"by",
