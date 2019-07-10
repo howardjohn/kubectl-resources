@@ -47,6 +47,13 @@ func (p *PodResource) Memory() *Resource {
 	return res
 }
 
+func (r *Resource) ExceedsRequest() bool {
+	if r.Request == 0 {
+		return false
+	}
+	return r.Usage > r.Request
+}
+
 func MergePodResources(resources ...map[string]*PodResource) (map[string]*PodResource, error) {
 	merged := map[string]*PodResource{}
 	for _, resource := range resources {

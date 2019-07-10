@@ -22,6 +22,7 @@ var (
 	showNodes          = false
 	verbose            = false
 	aggregation        = "POD"
+	onlyWarnings       = false
 )
 
 func init() {
@@ -45,6 +46,13 @@ func init() {
 		"v",
 		verbose,
 		"show full resource names",
+	)
+	rootCmd.PersistentFlags().BoolVarP(
+		&onlyWarnings,
+		"warnings",
+		"w",
+		onlyWarnings,
+		"only show resources using excessive resources",
 	)
 	rootCmd.PersistentFlags().StringVarP(
 		&aggregation,
@@ -75,6 +83,7 @@ var rootCmd = &cobra.Command{
 			Verbose:            verbose,
 			ShowNodes:          showNodes,
 			ColoredOutput:      color,
+			OnlyWarnings:       onlyWarnings,
 		}
 		return client.Run(args)
 	},
