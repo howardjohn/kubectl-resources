@@ -22,6 +22,9 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 
 	var allRows []*ResourceRow
 	for _, pod := range resources {
+		if args.OnlyWarnings && !(pod.Cpu().ExceedsRequest() || pod.Memory().ExceedsRequest()) {
+			continue
+		}
 		allRows = append(allRows, PodToRows(pod)...)
 	}
 
