@@ -54,7 +54,7 @@ func (c ColoredTableWriter) getTableOutput(allRows []*ResourceRow) [][]cell {
 	for _, row := range rows {
 		output = append(output, formatRow(row, c.Args))
 	}
-	if c.Footer && c.Args.Aggregation != model.Total {
+	if c.Footer && c.Args.Aggregation != model.Total && len(allRows) > 0 {
 		output = append(output, formatFooter(allRows, c.Args))
 	}
 	return output
