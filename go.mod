@@ -7,7 +7,7 @@ require (
 	github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946
 	github.com/magefile/mage v1.8.0
 	github.com/mattn/go-isatty v0.0.8
-	github.com/rogpeppe/go-internal v1.3.0
+	github.com/rogpeppe/go-internal v1.3.1
 	github.com/spf13/cobra v0.0.5
 	golang.org/x/crypto v0.0.0-20190313024323-a1f597ede03a // indirect
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
