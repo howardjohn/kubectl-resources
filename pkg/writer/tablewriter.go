@@ -188,6 +188,6 @@ func formatMemory(i int64) string {
 	if i == 0 {
 		return "-"
 	}
-	mb := int64(float64(i) / (1024 * 1024 * 1024))
-	return strconv.FormatInt(mb, 10) + "Mi"
+	mb := int(float64(i) / (1024 * 1024 * 1000))
+	return strconv.Itoa(mb) + "Mi"
 }
