@@ -61,6 +61,8 @@ github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946 h1:z+WaKrgu3kCp
 github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/magefile/mage v1.8.0 h1:mzL+xIopvPURVBwHG9A50JcjBO+xV3b5iZ7khFRI+5E=
 github.com/magefile/mage v1.8.0/go.mod h1:IUDi13rsHje59lecXokTfGX0QIzO45uVPlXnJYsXepA=
+github.com/magefile/mage v1.9.0 h1:t3AU2wNwehMCW97vuqQLtw6puppWXHO+O2MHo5a50XE=
+github.com/magefile/mage v1.9.0/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
 github.com/magiconair/properties v1.8.0 h1:LLgXmsheXeRoUOBOjtwPQCWIYqM/LU1ayDtDePerRcY=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mattn/go-isatty v0.0.9 h1:d5US/mDsogSGW37IV293h//ZFaeajb69h+EHFsv2xGg=
