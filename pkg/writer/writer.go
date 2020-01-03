@@ -20,7 +20,7 @@ func Write(response map[string]*model.PodResource, args *model.Args) error {
 		simplifyNodeNames(resources)
 	}
 
-	var allRows []*ResourceRow
+	var allRows []ResourceRow
 	for _, pod := range resources {
 		if args.OnlyWarnings && !(pod.Cpu().ExceedsRequest() || pod.Memory().ExceedsRequest()) {
 			continue

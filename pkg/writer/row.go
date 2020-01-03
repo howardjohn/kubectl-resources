@@ -15,10 +15,10 @@ type ResourceRow struct {
 	Memory    *model.Resource
 }
 
-func PodToRows(pod *model.PodResource) []*ResourceRow {
-	var rows []*ResourceRow
+func PodToRows(pod *model.PodResource) []ResourceRow {
+	var rows []ResourceRow
 	for _, c := range pod.Containers {
-		rows = append(rows, &ResourceRow{
+		rows = append(rows, ResourceRow{
 			Name:      pod.Name,
 			Namespace: pod.Namespace,
 			Node:      pod.Node,
@@ -30,7 +30,7 @@ func PodToRows(pod *model.PodResource) []*ResourceRow {
 	return rows
 }
 
-func SortRows(res []*ResourceRow) {
+func SortRows(res []ResourceRow) {
 	sort.Slice(res, func(i, j int) bool {
 		if res[i].Namespace != res[j].Namespace {
 			return res[i].Namespace < res[j].Namespace
@@ -45,50 +45,53 @@ func SortRows(res []*ResourceRow) {
 	})
 }
 
-func AggregateRows(rows []*ResourceRow, aggregation model.Aggregation) []*ResourceRow {
+func AggregateRows(rows []ResourceRow, aggregation model.Aggregation) []ResourceRow {
 	type Key [4]string
-	var getKey func(*ResourceRow) Key
+	getKey := func(row ResourceRow) Key {
+		return Key{}
+	}
 	switch aggregation {
 	case model.Container:
 		return rows
 	case model.Namespace:
-		getKey = func(row *ResourceRow) Key {
+		getKey = func(row ResourceRow) Key {
 			return Key{row.Namespace}
 		}
 	case model.Pod:
-		getKey = func(row *ResourceRow) Key {
+		getKey = func(row ResourceRow) Key {
 			return Key{row.Namespace, row.Name}
 		}
 	case model.Node:
-		getKey = func(row *ResourceRow) Key {
+		getKey = func(row ResourceRow) Key {
 			return Key{row.Node}
 		}
 	case model.Total:
-		getKey = func(row *ResourceRow) Key {
+		getKey = func(row ResourceRow) Key {
 			return Key{}
 		}
 	}
 
-	rowMap := make(map[Key]*ResourceRow)
+	rowMap := make(map[Key]ResourceRow)
 	for _, row := range rows {
 		key := getKey(row)
 		cur, f := rowMap[key]
 		if f {
-			clearKeys(cur, aggregation)
-			cur.Cpu.Merge(row.Cpu)
-			cur.Memory.Merge(row.Memory)
+			cur = clearKeys(cur, aggregation)
+			cur.Cpu = cur.Cpu.Merge(row.Cpu)
+			cur.Memory = cur.Memory.Merge(row.Memory)
+			rowMap[key] = cur
 		} else {
 			rowMap[key] = row
 		}
 	}
-	var result []*ResourceRow
+	var result []ResourceRow
 	for _, row := range rowMap {
 		result = append(result, row)
 	}
 	return result
 }
 
-func clearKeys(row *ResourceRow, aggregation model.Aggregation) {
+func clearKeys(row ResourceRow, aggregation model.Aggregation) ResourceRow {
 	switch aggregation {
 	case model.Total:
 		fallthrough
@@ -102,6 +105,8 @@ func clearKeys(row *ResourceRow, aggregation model.Aggregation) {
 		row.Container = ""
 		fallthrough
 	case model.Container:
-		return
+		fallthrough
+	default:
+		return row
 	}
 }
