@@ -62,8 +62,8 @@ func Run() error {
 // Installs all dependencies for building and testing
 func Deps() error {
 	modules := map[string]string{
-		"golangci-lint": "github.com/golangci/golangci-lint/cmd/golangci-lint",
-		"goimports":     "golang.org/x/tools/cmd/goimports",
+		"golangci-lint": "github.com/golangci/golangci-lint/cmd/golangci-lint@v1.22.2",
+		"goimports":     "golang.org/x/tools/cmd/goimports@v0.0.0-20200103221440-774c71fcf114",
 	}
 	for binary, mod := range modules {
 		if !binaryExists(binary) {
