@@ -81,6 +81,7 @@ func GitDirty() error {
 	if o != "" || err != nil {
 		// Show the full status
 		sh.Run("git", "status")
+		sh.Run("git", "diff")
 		return fmt.Errorf("git is dirty")
 	}
 	return nil
