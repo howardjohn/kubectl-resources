@@ -1,6 +1,6 @@
 steps:
   - commands:
-    - go get github.com/magefile/mage
+    - go get github.com/magefile/mage@v1.8.0
     - mage -v
     - mage -v gitdirty
     plugins:
