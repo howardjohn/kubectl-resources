@@ -43,7 +43,7 @@ func c(value string, styles ...StyleFunc) cell {
 	return cell{value, filtered}
 }
 
-func (c ColoredTableWriter) getTableOutput(allRows []*ResourceRow) [][]cell {
+func (c ColoredTableWriter) getTableOutput(allRows []ResourceRow) [][]cell {
 	rows := AggregateRows(allRows, c.Args.Aggregation)
 	SortRows(rows)
 
@@ -54,13 +54,13 @@ func (c ColoredTableWriter) getTableOutput(allRows []*ResourceRow) [][]cell {
 	for _, row := range rows {
 		output = append(output, formatRow(row, c.Args))
 	}
-	if c.Footer && c.Args.Aggregation != model.Total && len(allRows) > 0 {
+	if c.Footer && c.Args.Aggregation != model.Total && len(rows) > 0 {
 		output = append(output, formatFooter(allRows, c.Args))
 	}
 	return output
 }
 
-func (c ColoredTableWriter) WriteRows(allRows []*ResourceRow) {
+func (c ColoredTableWriter) WriteRows(allRows []ResourceRow) {
 	output := c.getTableOutput(allRows)
 	if len(output) == 0 {
 		return
@@ -124,7 +124,7 @@ func formatHeader(args *model.Args) []cell {
 	return headers
 }
 
-func formatFooter(allRows []*ResourceRow, args *model.Args) []cell {
+func formatFooter(allRows []ResourceRow, args *model.Args) []cell {
 	footer := AggregateRows(allRows, model.Total)[0]
 	footer.Name = ""
 	footer.Node = ""
@@ -133,7 +133,7 @@ func formatFooter(allRows []*ResourceRow, args *model.Args) []cell {
 	return formatRow(footer, args)
 }
 
-func formatRow(row *ResourceRow, args *model.Args) []cell {
+func formatRow(row ResourceRow, args *model.Args) []cell {
 	var out []cell
 	switch args.Aggregation {
 	case model.Container:

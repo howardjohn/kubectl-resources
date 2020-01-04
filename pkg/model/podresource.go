@@ -1,6 +1,8 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Resource struct {
 	Request int64
@@ -8,10 +10,12 @@ type Resource struct {
 	Usage   int64
 }
 
-func (r *Resource) Merge(other *Resource) {
-	r.Request += other.Request
-	r.Limit += other.Limit
-	r.Usage += other.Usage
+func (r *Resource) Merge(other *Resource) *Resource {
+	cp := *r
+	cp.Request += other.Request
+	cp.Limit += other.Limit
+	cp.Usage += other.Usage
+	return &cp
 }
 
 type ContainerResource struct {
