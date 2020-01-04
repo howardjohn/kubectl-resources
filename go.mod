@@ -9,7 +9,7 @@ require (
 	github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946
 	github.com/magefile/mage v1.9.0
 	github.com/mattn/go-isatty v0.0.9
-	github.com/rogpeppe/go-internal v1.3.1
+	github.com/rogpeppe/go-internal v1.5.1
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
