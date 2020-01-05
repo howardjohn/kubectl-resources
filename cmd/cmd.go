@@ -79,6 +79,11 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
+		switch agg {
+		case model.Node, model.Namespace:
+			kubeResouceBuilderFlags = kubeResouceBuilderFlags.WithAllNamespaces(true)
+		}
+
 		resourceFinder := kubeResouceBuilderFlags.WithAll(true).ToBuilder(kubeConfigFlags, []string{
 			"pods.metrics.k8s.io,pods",
 		})
