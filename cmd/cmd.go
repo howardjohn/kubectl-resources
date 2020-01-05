@@ -3,9 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path"
 
 	isatty "github.com/mattn/go-isatty"
+	"github.com/spf13/pflag"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/howardjohn/kubectl-resources/pkg/model"
 
@@ -15,24 +16,15 @@ import (
 )
 
 var (
-	namespace          = ""
-	kubeConfig         = path.Join(os.Getenv("HOME"), ".kube", "config")
-	namespaceBlacklist = []string{"kube-system"}
-	color              = isatty.IsTerminal(os.Stdout.Fd())
-	showNodes          = false
-	verbose            = false
-	aggregation        = "POD"
-	onlyWarnings       = false
+	color         = isatty.IsTerminal(os.Stdout.Fd())
+	showNodes     = false
+	verbose       = false
+	aggregation   = "POD"
+	onlyWarnings  = false
+	allNamespaces = false
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(
-		&namespace,
-		"namespace",
-		"n",
-		namespace,
-		"namespace to query. If not set, all namespaces are included",
-	)
 	rootCmd.PersistentFlags().BoolVarP(
 		&showNodes,
 		"show-nodes",
@@ -70,6 +62,14 @@ func init() {
 	)
 }
 
+var (
+	kubeConfigFlags = genericclioptions.NewConfigFlags(false)
+
+	kubeResouceBuilderFlags = genericclioptions.NewResourceBuilderFlags().
+				WithAllNamespaces(false).
+				WithLabelSelector("")
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "kubectl-resources",
 	Short: "Plugin to access Kubernetes resource requests, limits, and usage.",
@@ -79,24 +79,29 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		if kc, f := os.LookupEnv("KUBECONFIG"); f {
-			kubeConfig = kc
-		}
+		resourceFinder := kubeResouceBuilderFlags.WithAll(true).ToBuilder(kubeConfigFlags, []string{
+			"pods.metrics.k8s.io,pods",
+		})
 		args := &model.Args{
-			Namespace:          namespace,
-			KubeConfig:         kubeConfig,
-			NamespaceBlacklist: namespaceBlacklist,
-			Aggregation:        agg,
-			Verbose:            verbose,
-			ShowNodes:          showNodes,
-			ColoredOutput:      color,
-			OnlyWarnings:       onlyWarnings,
+			ResourceFinder: resourceFinder,
+			AllNamespaces:  allNamespaces,
+			Aggregation:    agg,
+			Verbose:        verbose,
+			ShowNodes:      showNodes,
+			ColoredOutput:  color,
+			OnlyWarnings:   onlyWarnings,
 		}
 		return client.Run(args)
 	},
 }
 
 func Execute() {
+	flags := pflag.NewFlagSet("kubectl-resources", pflag.ExitOnError)
+	pflag.CommandLine = flags
+
+	kubeConfigFlags.AddFlags(flags)
+	kubeResouceBuilderFlags.AddFlags(flags)
+	flags.AddFlagSet(rootCmd.PersistentFlags())
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
