@@ -1,7 +1,7 @@
 .ONESHELL:
 GOBIN ?= $(GOPATH)/bin
 MODULE = github.com/howardjohn/kubectl-resources
-GO111MODULE ?= on
+export GO111MODULE ?= on
 
 all: format lint install
 
