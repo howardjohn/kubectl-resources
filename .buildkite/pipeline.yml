@@ -1,8 +1,7 @@
 steps:
   - commands:
-    - go get github.com/magefile/mage@v1.9.0
-    - mage -v
-    - mage -v gitdirty
+    - make
+    - make gen-check
     plugins:
       - docker#v3.4.0:
           image: "golang:1.13"
