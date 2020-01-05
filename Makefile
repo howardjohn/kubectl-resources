@@ -1,4 +1,5 @@
 .ONESHELL:
+SHELL := /bin/bash
 GOBIN ?= $(GOPATH)/bin
 MODULE = github.com/howardjohn/kubectl-resources
 export GO111MODULE ?= on
@@ -25,7 +26,7 @@ check-git:
 	fi
 
 .PHONY: gen-check
-gen-check: check-git format tidy
+gen-check: check-git format
 
 .PHONY: format
 format: $(GOBIN)/goimports
