@@ -6,27 +6,32 @@ A plugin to access Kubernetes resource requests, limits, and usage.
 
 ## Install
 
-`go get -u github.com/howardjohn/kubectl-resources`
+`go get github.com/howardjohn/kubectl-resources`
 
 ## Usage
 
 ```
-kubectl resources --help
 Plugin to access Kubernetes resource requests, limits, and usage.
 
 Usage:
   kubectl-resources [flags]
 
 Flags:
-  -h, --help               help for kubectl-resources
-  -n, --namespace string   namespace to query. If not set, all namespaces are included
-  -c, --show-containers    include container level details
-  -d, --show-nodes         include node names
-  -v, --verbose            show full resource names
+  -A, --all-namespaces                 If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.
+  -b, --by string                      column to aggregate on. Default is pod (default "POD")
+  -c, --color                          show colors for pods using excessive resources (default true)
+  -h, --help                           help for kubectl-resources
+  -n, --namespace string               If present, the namespace scope for this CLI request
+  -l, --selector string                Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
+  -d, --show-nodes                     include node names
+  -v, --verbose                        show full resource names
+  -w, --warnings                       only show resources using excessive resources
 ```
 
+Example output:
+
 ```
-kubectl resources
+$ kubectl resources
 NAMESPACE       POD             CPU USE CPU REQ CPU LIM MEM USE MEM REQ MEM LIM
 default         details-v1      6m      110m    2000m   36Mi    39Mi    1000Mi
 default         productpage-v1  12m     110m    2000m   71Mi    39Mi    1000Mi
@@ -43,11 +48,15 @@ In the above example, the `details-v1` deployment has just one replica, so only 
 For `shell`, which has multiple replicas, just the replicaset's identifier is shown.
 For nodes, only the unique segment of the name is shown.
 
-To show more details, you can add the `-c` flag to show containers, and the `-d` flag to show nodes.
+You can also aggregate info at different levels. By default this is at the pod level, but can also be namespace, node, or container.
+
+For example, to see resource utilization by namespace
 
 ```
-kubectl resources -v -c -d
-NAMESPACE  POD                             CONTAINER       NODE                              CPU USE CPU REQ CPU LIM MEM USE  MEM REQ MEM LIM
-default    details-v1-5cb65fd66c-6mtt2     details         gke-default-pool-f93f0b08-zwt6    1m      100m    -       10Mi     -       -
-default    details-v1-5cb65fd66c-6mtt2     istio-proxy     gke-default-pool-f93f0b08-zwt6    5m      10m     2000m   25Mi     39Mi    1000Mi
+$ kubectl resources --by namespace
+NAMESPACE     CPU USE  CPU REQ  CPU LIM  MEM USE  MEM REQ  MEM LIM
+default       3m       110m     2100m    29Mi     144Mi    1152Mi
+istio-system  70m      2140m    14800m   570Mi    3641Mi   8934Mi
+kube-system   82m      1831m    3222m    1312Mi   1203Mi   2365Mi
+              155m     4081m    20122m   1912Mi   4989Mi   12452Mi
 ```

@@ -3,17 +3,18 @@ package model
 import (
 	"fmt"
 	"strings"
+
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 type Args struct {
-	Namespace          string
-	KubeConfig         string
-	NamespaceBlacklist []string
-	Aggregation        Aggregation
-	Verbose            bool
-	ShowNodes          bool
-	ColoredOutput      bool
-	OnlyWarnings       bool
+	ResourceFinder genericclioptions.ResourceFinder
+	Aggregation    Aggregation
+	AllNamespaces  bool
+	Verbose        bool
+	ShowNodes      bool
+	ColoredOutput  bool
+	OnlyWarnings   bool
 }
 
 type Aggregation int
