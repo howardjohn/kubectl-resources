@@ -133,7 +133,7 @@ func formatFooter(allRows []ResourceRow, args *model.Args) []cell {
 	return formatRow(footer, args)
 }
 
-func formatRow(row ResourceRow, args *model.Args) []cell {
+func formatRow(row AggregateResourceRow, args *model.Args) []cell {
 	var out []cell
 	switch args.Aggregation {
 	case model.Container:
@@ -147,12 +147,12 @@ func formatRow(row ResourceRow, args *model.Args) []cell {
 		out = append(out, c(row.Node))
 	}
 	out = append(out,
-		c(formatCpu(row.Cpu.Usage), styleResource(row.Cpu)),
-		c(formatCpu(row.Cpu.Request)),
-		c(formatCpu(row.Cpu.Limit)),
-		c(formatMemory(row.Memory.Usage), styleResource(row.Memory)),
-		c(formatMemory(row.Memory.Request)),
-		c(formatMemory(row.Memory.Limit)),
+		c(formatCpu(row.TotalCpu().Usage), styleResource(row.Cpu)),
+		c(formatCpu(row.TotalCpu().Request)),
+		c(formatCpu(row.TotalCpu().Limit)),
+		c(formatMemory(row.TotalMemory().Usage), styleResource(row.Memory)),
+		c(formatMemory(row.TotalMemory().Request)),
+		c(formatMemory(row.TotalMemory().Limit)),
 	)
 	return out
 }
@@ -174,11 +174,19 @@ func formatCpu(i int64) string {
 	return strconv.FormatInt(i, 10) + "m"
 }
 
-func styleResource(r *model.Resource) StyleFunc {
-	if r.Usage > r.Limit && r.Limit != 0 {
-		return aurora.Red
+func styleResource(res []model.Resource) StyleFunc {
+	exceed := false
+	warn := false
+	for _, r := range res {
+		if r.Usage > r.Limit && r.Limit != 0 {
+			exceed = true
+		} else if r.Usage > r.Request && r.Request != 0 {
+			warn = true
+		}
 	}
-	if r.Usage > r.Request && r.Request != 0 {
+	if exceed {
+		return aurora.Red
+	} else if warn {
 		return aurora.Yellow
 	}
 	return nil

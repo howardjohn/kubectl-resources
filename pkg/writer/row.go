@@ -11,8 +11,49 @@ type ResourceRow struct {
 	Namespace string
 	Node      string
 	Container string
-	Cpu       *model.Resource
-	Memory    *model.Resource
+	Cpu       model.Resource
+	Memory    model.Resource
+}
+
+func (r ResourceRow) toAggregate() AggregateResourceRow {
+	return AggregateResourceRow{
+		Name:      r.Name,
+		Namespace: r.Namespace,
+		Node:      r.Node,
+		Container: r.Container,
+		Cpu:       []model.Resource{r.Cpu},
+		Memory:    []model.Resource{r.Memory},
+	}
+}
+
+type AggregateResourceRow struct {
+	Name      string
+	Namespace string
+	Node      string
+	Container string
+	Cpu       []model.Resource
+	Memory    []model.Resource
+}
+
+func (a *AggregateResourceRow) TotalCpu() model.Resource {
+	res := model.Resource{}
+	for _, c := range a.Cpu {
+		res = res.Merge(c)
+	}
+	return res
+}
+
+func (a *AggregateResourceRow) TotalMemory() model.Resource {
+	res := model.Resource{}
+	for _, c := range a.Memory {
+		res = res.Merge(c)
+	}
+	return res
+}
+
+func (a *AggregateResourceRow) Add(cpu model.Resource, mem model.Resource) {
+	a.Cpu = append(a.Cpu, cpu)
+	a.Memory = append(a.Memory, mem)
 }
 
 func PodToRows(pod *model.PodResource) []ResourceRow {
@@ -30,7 +71,7 @@ func PodToRows(pod *model.PodResource) []ResourceRow {
 	return rows
 }
 
-func SortRows(res []ResourceRow) {
+func SortRows(res []AggregateResourceRow) {
 	sort.Slice(res, func(i, j int) bool {
 		if res[i].Namespace != res[j].Namespace {
 			return res[i].Namespace < res[j].Namespace
@@ -45,14 +86,16 @@ func SortRows(res []ResourceRow) {
 	})
 }
 
-func AggregateRows(rows []ResourceRow, aggregation model.Aggregation) []ResourceRow {
+func AggregateRows(rows []ResourceRow, aggregation model.Aggregation) []AggregateResourceRow {
 	type Key [4]string
 	getKey := func(row ResourceRow) Key {
 		return Key{}
 	}
 	switch aggregation {
 	case model.Container:
-		return rows
+		getKey = func(row ResourceRow) Key {
+			return Key{row.Namespace, row.Name, row.Container}
+		}
 	case model.Namespace:
 		getKey = func(row ResourceRow) Key {
 			return Key{row.Namespace}
@@ -71,27 +114,26 @@ func AggregateRows(rows []ResourceRow, aggregation model.Aggregation) []Resource
 		}
 	}
 
-	rowMap := make(map[Key]ResourceRow)
+	rowMap := make(map[Key]AggregateResourceRow)
 	for _, row := range rows {
 		key := getKey(row)
 		cur, f := rowMap[key]
 		if f {
 			cur = clearKeys(cur, aggregation)
-			cur.Cpu = cur.Cpu.Merge(row.Cpu)
-			cur.Memory = cur.Memory.Merge(row.Memory)
+			cur.Add(row.Cpu, row.Memory)
 			rowMap[key] = cur
 		} else {
-			rowMap[key] = row
+			rowMap[key] = row.toAggregate()
 		}
 	}
-	var result []ResourceRow
+	var result []AggregateResourceRow
 	for _, row := range rowMap {
 		result = append(result, row)
 	}
 	return result
 }
 
-func clearKeys(row ResourceRow, aggregation model.Aggregation) ResourceRow {
+func clearKeys(row AggregateResourceRow, aggregation model.Aggregation) AggregateResourceRow {
 	switch aggregation {
 	case model.Total:
 		fallthrough

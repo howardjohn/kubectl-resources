@@ -10,18 +10,18 @@ type Resource struct {
 	Usage   int64
 }
 
-func (r *Resource) Merge(other *Resource) *Resource {
-	cp := *r
+func (r Resource) Merge(other Resource) Resource {
+	cp := r
 	cp.Request += other.Request
 	cp.Limit += other.Limit
 	cp.Usage += other.Usage
-	return &cp
+	return cp
 }
 
 type ContainerResource struct {
 	Name   string
-	Cpu    *Resource
-	Memory *Resource
+	Cpu    Resource
+	Memory Resource
 }
 
 type PodResource struct {
@@ -84,8 +84,8 @@ func MergePodResources(resources ...map[string]*PodResource) (map[string]*PodRes
 			for _, container := range pod.Containers {
 				if merged[key].Containers[container.Name] == nil {
 					merged[key].Containers[container.Name] = &ContainerResource{
-						Memory: &Resource{},
-						Cpu:    &Resource{},
+						Memory: Resource{},
+						Cpu:    Resource{},
 					}
 				}
 				c := merged[key].Containers[container.Name]
