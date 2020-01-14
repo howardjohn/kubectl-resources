@@ -18,7 +18,7 @@ import (
 var (
 	color         = isatty.IsTerminal(os.Stdout.Fd())
 	showNodes     = false
-	verbose       = false
+	verbose       = true
 	aggregation   = "POD"
 	onlyWarnings  = false
 	allNamespaces = false
