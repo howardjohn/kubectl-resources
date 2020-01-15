@@ -10,6 +10,6 @@ require (
 	k8s.io/api v0.17.0
 	k8s.io/apimachinery v0.17.0
 	k8s.io/cli-runtime v0.17.0
-	k8s.io/client-go v0.17.0
+	k8s.io/client-go v0.17.1
 	k8s.io/metrics v0.17.0
 )
