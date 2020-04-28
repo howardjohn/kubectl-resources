@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	isatty "github.com/mattn/go-isatty"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
@@ -83,10 +83,15 @@ var rootCmd = &cobra.Command{
 		case model.Node, model.Namespace:
 			kubeResouceBuilderFlags = kubeResouceBuilderFlags.WithAllNamespaces(true)
 		}
-
-		resourceFinder := kubeResouceBuilderFlags.WithAll(true).ToBuilder(kubeConfigFlags, []string{
-			"pods.metrics.k8s.io,pods",
-		})
+		resources := "pods"
+		supports, err := supportsMetrics(kubeConfigFlags)
+		if err != nil {
+			return err
+		}
+		if supports {
+			resources += ",pods.metrics.k8s.io"
+		}
+		resourceFinder := kubeResouceBuilderFlags.WithAll(true).ToBuilder(kubeConfigFlags, []string{resources})
 		args := &model.Args{
 			ResourceFinder: resourceFinder,
 			AllNamespaces:  allNamespaces,
@@ -98,6 +103,19 @@ var rootCmd = &cobra.Command{
 		}
 		return client.Run(args)
 	},
+}
+
+func supportsMetrics(flags *genericclioptions.ConfigFlags) (bool, error) {
+	d, err := flags.ToDiscoveryClient()
+	if err != nil {
+		return false, fmt.Errorf("failed to create discovery client: %v", err)
+	}
+	l, err := d.ServerResourcesForGroupVersion("metrics.k8s.io/v1beta1")
+	// This may fail if any api service is down. If we run into issues, just assume its not supported
+	if err != nil {
+		return false, nil
+	}
+	return l != nil, nil
 }
 
 func Execute() {
