@@ -60,3 +60,7 @@ istio-system  70m      2140m    14800m   570Mi    3641Mi   8934Mi
 kube-system   82m      1831m    3222m    1312Mi   1203Mi   2365Mi
               155m     4081m    20122m   1912Mi   4989Mi   12452Mi
 ```
+
+## Known Issues
+
+While init containers [play a role in resource allocation](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/#resources), they are not accounted for in this tool.

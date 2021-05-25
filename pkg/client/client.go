@@ -31,6 +31,9 @@ func Run(args *model.Args) error {
 			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(info.Object.(*unstructured.Unstructured).Object, pm); err != nil {
 				return nil
 			}
+			if pm.Status.Phase == v1.PodSucceeded || pm.Status.Phase == v1.PodFailed {
+				return nil
+			}
 			responses = append(responses, fetchPod(pm))
 		}
 		return nil
