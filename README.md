@@ -6,7 +6,12 @@ A plugin to access Kubernetes resource requests, limits, and usage.
 
 ## Install
 
-`go get github.com/howardjohn/kubectl-resources`
+You can download and install kubectl-resources from [release](https://github.com/howardjohn/kubectl-resources/releases/latest).
+
+Also You can install kubectl-resources by `go install`:
+``` shell
+go install github.com/howardjohn/kubectl-resources
+```
 
 ## Usage
 
