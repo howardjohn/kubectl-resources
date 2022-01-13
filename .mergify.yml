@@ -8,7 +8,6 @@ pull_request_rules:
     actions:
       merge:
         method: squash
-        strict: false
       delete_head_branch: {}
   - name: automatic merge for admin
     conditions:
@@ -18,5 +17,11 @@ pull_request_rules:
     actions:
       merge:
         method: squash
-        strict: false
       delete_head_branch: {}
+  - name: ask the maintainer to review this PR
+    conditions:
+      - -draft
+    actions:
+      request_reviews:
+        users:
+          - howardjohn
