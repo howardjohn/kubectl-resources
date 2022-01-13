@@ -18,3 +18,10 @@ pull_request_rules:
       merge:
         method: squash
       delete_head_branch: {}
+  - name: ask the maintainer to review this PR
+    conditions:
+      - -draft
+    actions:
+      request_reviews:
+        users:
+          - howardjohn
