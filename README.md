@@ -10,7 +10,7 @@ You can download and install kubectl-resources from [release](https://github.com
 
 Also You can install kubectl-resources by `go install`:
 ``` shell
-go install github.com/howardjohn/kubectl-resources
+go get github.com/howardjohn/kubectl-resources
 ```
 
 ## Usage
